@@ -2,6 +2,14 @@ apply(plugin: 'java')
 apply(plugin: 'idea')
 apply(plugin: 'application')
 
+repositories {
+  jcenter()
+}
+
+dependencies {
+  compile(group: 'com.intellij', name: 'forms_rt', version: '7.0.3')
+}
+
 sourceSets {
   main {
     java {
@@ -10,10 +18,4 @@ sourceSets {
   }
 }
 
-run {
-    if (project.hasProperty("appArgs")) {
-        args Eval.me(appArgs)
-  }
-}
-
-mainClassName = "client.ClientTest"
+mainClassName = "client.Application"
