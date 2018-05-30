@@ -42,10 +42,6 @@ public class SwingView {
         return nameTextField;
     }
 
-    public JLabel getStatusLabel() {
-        return statusLabel;
-    }
-
     public JTabbedPane getTabbedPane() {
         return tabbedPane;
     }
@@ -56,6 +52,10 @@ public class SwingView {
 
     public JButton getSendButton() {
         return sendButton;
+    }
+
+    public void displayStatus(String status) {
+        statusLabel.setText(status);
     }
 
     public JTextArea addTab(String title) {
