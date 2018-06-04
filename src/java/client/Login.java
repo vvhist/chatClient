@@ -5,6 +5,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 
 public class Login {
@@ -28,20 +29,20 @@ public class Login {
         frame.setVisible(true);
     }
 
-    public JTextField getUsernameField() {
-        return usernameField;
+    public String getUsername() {
+        return usernameField.getText();
     }
 
-    public JPasswordField getPasswordField() {
-        return passwordField;
+    public char[] getPassword() {
+        return passwordField.getPassword();
     }
 
-    public JButton getLoginButton() {
-        return loginButton;
+    public void addListenerToLoginButton(ActionListener listener) {
+        loginButton.addActionListener(listener);
     }
 
-    public JButton getRegisterButton() {
-        return registerButton;
+    public void addListenerToRegisterButton(ActionListener listener) {
+        registerButton.addActionListener(listener);
     }
 
     public void enableComponents(Container container, boolean isEnabled) {

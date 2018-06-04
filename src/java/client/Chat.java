@@ -5,14 +5,19 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 
 public class Chat {
 
     private JPanel mainPanel;
-    private JLabel statusLabel;
+    private JLabel warningLabel;
+    private JButton newContactButton;
+    private JTextField newContactField;
+    private JTextField outputField;
     private JButton sendButton;
-    private JTextField outputTextField;
     private JTabbedPane tabbedPane;
 
     public Chat(WindowAdapter adapter) {
@@ -21,32 +26,71 @@ public class Chat {
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(adapter);
         frame.pack();
+        frame.setMinimumSize(new Dimension(500, 300));
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+
+        newContactField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    newContactButton.doClick();
+                }
+            }
+        });
+
+        outputField.addKeyListener(new KeyAdapter() {
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    sendButton.doClick();
+                }
+            }
+        });
     }
 
-    public JTabbedPane getTabbedPane() {
-        return tabbedPane;
+    public String getNewContact() {
+        return newContactField.getText();
     }
 
-    public JTextField getOutputTextField() {
-        return outputTextField;
+    public void clearNewContactField() {
+        newContactField.setText("");
     }
 
-    public JButton getSendButton() {
-        return sendButton;
+    public String getOutput() {
+        return outputField.getText();
     }
 
-    public void displayStatus(String status) {
-        statusLabel.setText(status);
+    public void clearOutputField() {
+        outputField.setText("");
     }
 
-    public JTextArea addTab(String title) {
+    public void addListenerToNewContactButton(ActionListener listener) {
+        newContactButton.addActionListener(listener);
+    }
+
+    public void addListenerToSendButton(ActionListener listener) {
+        sendButton.addActionListener(listener);
+    }
+
+    public void displayWarning(String status) {
+        warningLabel.setText(status);
+    }
+
+    public String getSelectedTabTitle() {
+        return tabbedPane.getTitleAt(tabbedPane.getSelectedIndex());
+    }
+
+    public JTextArea getNewTab(String title) {
         JTextArea textArea = new JTextArea();
         JScrollPane scrollPane = new JScrollPane(textArea);
         JPanel panel = new JPanel(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel.add(scrollPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         tabbedPane.addTab(title, panel);
+        tabbedPane.setEnabled(true);
+        sendButton.setEnabled(true);
+        outputField.setEnabled(true);
         return textArea;
     }
 
@@ -66,20 +110,35 @@ public class Chat {
      */
     private void $$$setupUI$$$() {
         mainPanel = new JPanel();
-        mainPanel.setLayout(new GridLayoutManager(3, 2, new Insets(0, 0, 0, 0), -1, -1));
-        outputTextField = new JTextField();
-        mainPanel.add(outputTextField, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        mainPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), 0, 0));
+        warningLabel = new JLabel();
+        Font warningLabelFont = this.$$$getFont$$$(null, Font.BOLD, 9, warningLabel.getFont());
+        if (warningLabelFont != null) warningLabel.setFont(warningLabelFont);
+        warningLabel.setForeground(new Color(-65536));
+        warningLabel.setText(" ");
+        mainPanel.add(warningLabel, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 1, false));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
+        mainPanel.add(panel1, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        outputField = new JTextField();
+        outputField.setEnabled(false);
+        panel1.add(outputField, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         sendButton = new JButton();
+        sendButton.setEnabled(false);
         sendButton.setText("Send");
-        mainPanel.add(sendButton, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        panel1.add(sendButton, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(-1, 22), 0, false));
         tabbedPane = new JTabbedPane();
-        mainPanel.add(tabbedPane, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
-        statusLabel = new JLabel();
-        Font statusLabelFont = this.$$$getFont$$$(null, Font.BOLD, 9, statusLabel.getFont());
-        if (statusLabelFont != null) statusLabel.setFont(statusLabelFont);
-        statusLabel.setForeground(new Color(-65536));
-        statusLabel.setText(" ");
-        mainPanel.add(statusLabel, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        tabbedPane.setEnabled(false);
+        tabbedPane.setTabLayoutPolicy(1);
+        panel1.add(tabbedPane, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
+        final JPanel panel2 = new JPanel();
+        panel2.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        mainPanel.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        newContactButton = new JButton();
+        newContactButton.setText("Add contact");
+        panel2.add(newContactButton, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, new Dimension(-1, 22), 0, false));
+        newContactField = new JTextField();
+        panel2.add(newContactField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(90, -1), null, 0, false));
     }
 
     /**
