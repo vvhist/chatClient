@@ -2,7 +2,6 @@ package client;
 
 import javax.swing.*;
 
-import java.awt.event.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
@@ -19,73 +18,54 @@ public final class Presenter {
     private Map<String, JTextArea> dialogs = new HashMap<>();
     private PrintWriter output = null;
 
-    public Presenter() {
+    public Presenter(Login loginForm) {
+        this.loginForm = loginForm;
         new ConnectionHandler().execute();
-        loginForm = new Login(new CloseOperation());
-
-        loginForm.addListenerToLoginButton(e -> {
-            String authData = getAuthData();
-            if (authData.isEmpty()) return;
-            output.println("/log/" + authData);
-        });
-
-        loginForm.addListenerToRegisterButton(e -> {
-            String authData = getAuthData();
-            if (authData.isEmpty()) return;
-            output.println("/reg/" + authData);
-        });
     }
 
-    private String getAuthData() {
-        String username = loginForm.getUsername();
-        char[] password = loginForm.getPassword();
+    public void logIn(String username, char[] password) {
+        sendAuthData("/log/", username, password);
+    }
 
-        if (username.isEmpty() || password.length == 0) return "";
+    public void register(String username, char[] password) {
+        sendAuthData("/reg/", username, password);
+    }
+
+    private void sendAuthData(String command, String username, char[] password) {
+        if (username.isEmpty() || password.length == 0) return;
         if (username.contains("/")) {
             loginForm.displayWarning("A username cannot contain /");
-            return "";
+            return;
         }
         StringBuilder builder = new StringBuilder(username + "/");
         for (char c : password) {
             builder.append(c);
         }
         Arrays.fill(password, '0');
-        return builder.toString();
+        output.println(command + builder.toString());
     }
 
-    private void addChatListeners() {
-        chatForm.addListenerToNewContactButton(e -> {
-            String contact = chatForm.getNewContact();
-            if (contact.isEmpty()) return;
+    public void searchNewContact(String contact) {
+        if (contact.isEmpty()) return;
 
-            if (dialogs.containsKey(contact)) {
-                chatForm.displayWarning("Conversation with " + contact + " already exists.");
-            } else {
-                output.println("/add/" + contact);
-            }
-            chatForm.clearNewContactField();
-        });
-
-        chatForm.addListenerToSendButton(e -> {
-            String outputText = chatForm.getOutput();
-            if (outputText.isEmpty()) return;
-
-            String contact = chatForm.getSelectedTabTitle();
-            output.println(contact + "/" + outputText);
-            chatForm.clearOutputField();
-        });
-    }
-
-
-    private final class CloseOperation extends WindowAdapter {
-
-        @Override
-        public void windowClosing(WindowEvent e) {
-            if (output != null) {
-                output.println("/exit");
-            }
-            System.exit(0);
+        if (dialogs.containsKey(contact)) {
+            chatForm.displayWarning("Conversation with " + contact + " already exists.");
+        } else {
+            output.println("/add/" + contact);
         }
+    }
+
+    public void sendOutput(String contact, String text) {
+        if (text.isEmpty()) return;
+
+        output.println(contact + "/" + text);
+    }
+
+    public void closeApp() {
+        if (output != null) {
+            output.println("/exit");
+        }
+        System.exit(0);
     }
 
 
@@ -118,8 +98,7 @@ public final class Presenter {
                     if (input.equals("/pass")) {
                         loginForm.close();
                         loginForm = null;
-                        chatForm = new Chat(new CloseOperation());
-                        addChatListeners();
+                        chatForm = new Chat(Presenter.this);
                     } else if (input.equals("/deny")) {
                         loginForm.displayWarning("Incorrect username or password");
                     } else if (input.equals("/denyName")) {
@@ -156,6 +135,7 @@ public final class Presenter {
                     loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), false);
                     loginForm.displayWarning(warning);
                 } else if (chatForm != null) {
+                    chatForm.enableComponents(chatForm.$$$getRootComponent$$$(), false);
                     chatForm.displayWarning(warning);
                 }
                 e.printStackTrace();

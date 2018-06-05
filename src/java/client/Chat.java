@@ -5,10 +5,10 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Chat {
 
@@ -20,15 +20,11 @@ public class Chat {
     private JButton sendButton;
     private JTabbedPane tabbedPane;
 
-    public Chat(WindowAdapter adapter) {
-        JFrame frame = new JFrame("Chat");
-        frame.setContentPane(mainPanel);
-        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.addWindowListener(adapter);
-        frame.pack();
-        frame.setMinimumSize(new Dimension(500, 300));
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+    public Chat(Presenter presenter) {
+        newContactButton.addActionListener(e -> {
+            presenter.searchNewContact(newContactField.getText());
+            newContactField.setText("");
+        });
 
         newContactField.addKeyListener(new KeyAdapter() {
             @Override
@@ -39,8 +35,13 @@ public class Chat {
             }
         });
 
-        outputField.addKeyListener(new KeyAdapter() {
+        sendButton.addActionListener(e -> {
+            String contact = tabbedPane.getTitleAt(tabbedPane.getSelectedIndex());
+            presenter.sendOutput(contact, outputField.getText());
+            outputField.setText("");
+        });
 
+        outputField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -48,38 +49,20 @@ public class Chat {
                 }
             }
         });
-    }
 
-    public String getNewContact() {
-        return newContactField.getText();
-    }
-
-    public void clearNewContactField() {
-        newContactField.setText("");
-    }
-
-    public String getOutput() {
-        return outputField.getText();
-    }
-
-    public void clearOutputField() {
-        outputField.setText("");
-    }
-
-    public void addListenerToNewContactButton(ActionListener listener) {
-        newContactButton.addActionListener(listener);
-    }
-
-    public void addListenerToSendButton(ActionListener listener) {
-        sendButton.addActionListener(listener);
-    }
-
-    public void displayWarning(String status) {
-        warningLabel.setText(status);
-    }
-
-    public String getSelectedTabTitle() {
-        return tabbedPane.getTitleAt(tabbedPane.getSelectedIndex());
+        JFrame frame = new JFrame("Chat");
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                presenter.closeApp();
+            }
+        });
+        frame.setContentPane(mainPanel);
+        frame.pack();
+        frame.setMinimumSize(new Dimension(500, 300));
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
     }
 
     public JTextArea getNewTab(String title) {
@@ -92,6 +75,22 @@ public class Chat {
         sendButton.setEnabled(true);
         outputField.setEnabled(true);
         return textArea;
+    }
+
+    public void enableComponents(Container container, boolean isEnabled) {
+        for (Component component : container.getComponents()) {
+            component.setEnabled(isEnabled);
+            if (component instanceof Container) {
+                enableComponents((Container) component, isEnabled);
+            }
+        }
+    }
+
+    public void displayWarning(String status) {
+        if (!warningLabel.isEnabled()) {
+            warningLabel.setEnabled(true);
+        }
+        warningLabel.setText(status);
     }
 
     {

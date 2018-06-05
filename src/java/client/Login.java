@@ -5,10 +5,12 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class Login {
+
+    private Presenter presenter;
 
     private JFrame frame;
     private JPanel mainPanel;
@@ -18,31 +20,34 @@ public class Login {
     private JButton registerButton;
     private JLabel warningLabel;
 
-    public Login(WindowAdapter closeOperation) {
+    public Login() {
+        presenter = new Presenter(this);
+
+        loginButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            char[] password = passwordField.getPassword();
+            presenter.logIn(username, password);
+        });
+
+        registerButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            char[] password = passwordField.getPassword();
+            presenter.register(username, password);
+        });
+
         frame = new JFrame("Login");
-        frame.setContentPane(mainPanel);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        frame.addWindowListener(closeOperation);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                presenter.closeApp();
+            }
+        });
+        frame.setContentPane(mainPanel);
         frame.pack();
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-    }
-
-    public String getUsername() {
-        return usernameField.getText();
-    }
-
-    public char[] getPassword() {
-        return passwordField.getPassword();
-    }
-
-    public void addListenerToLoginButton(ActionListener listener) {
-        loginButton.addActionListener(listener);
-    }
-
-    public void addListenerToRegisterButton(ActionListener listener) {
-        registerButton.addActionListener(listener);
     }
 
     public void enableComponents(Container container, boolean isEnabled) {

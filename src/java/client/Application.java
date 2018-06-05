@@ -12,7 +12,7 @@ public class Application {
                     | UnsupportedLookAndFeelException e) {
                 e.printStackTrace();
             }
-            new Presenter();
+            new Login();
         });
     }
 }
