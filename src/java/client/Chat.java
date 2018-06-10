@@ -37,7 +37,7 @@ public class Chat {
 
         sendButton.addActionListener(e -> {
             String contact = tabbedPane.getTitleAt(tabbedPane.getSelectedIndex());
-            presenter.sendOutput(contact, outputField.getText());
+            presenter.sendMessage(contact, outputField.getText());
             outputField.setText("");
         });
 

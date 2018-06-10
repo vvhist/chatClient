@@ -4,6 +4,7 @@ import javax.swing.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +43,7 @@ public final class Presenter {
             builder.append(c);
         }
         Arrays.fill(password, '0');
-        output.println(command + builder.toString());
+        output.println(command + ZoneId.systemDefault() + " " + builder.toString());
     }
 
     public void searchNewContact(String contact) {
@@ -55,7 +56,7 @@ public final class Presenter {
         }
     }
 
-    public void sendOutput(String contact, String text) {
+    public void sendMessage(String contact, String text) {
         if (text.isEmpty()) return;
 
         output.println(contact + "/" + text);
@@ -115,12 +116,14 @@ public final class Presenter {
                         chatForm.displayWarning("User " + contact + " was not found");
                     }
                 } else {
+                    String time = input.substring(0, input.indexOf(' '));
+                    input       = input.substring(   input.indexOf(' ') + 1);
                     String contact = input.substring(0, input.indexOf('/'));
-                    String message = input.substring(input.indexOf('/') + 1);
+                    String message = input.substring(   input.indexOf('/') + 1);
                     if (!dialogs.containsKey(contact)) {
                         dialogs.put(contact, chatForm.getNewTab(contact));
                     }
-                    dialogs.get(contact).append(message + "\n");
+                    dialogs.get(contact).append(time + " " + message + "\n");
                 }
             }
         }

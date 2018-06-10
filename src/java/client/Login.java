@@ -10,8 +10,6 @@ import java.awt.event.WindowEvent;
 
 public class Login {
 
-    private Presenter presenter;
-
     private JFrame frame;
     private JPanel mainPanel;
     private JTextField usernameField;
@@ -21,7 +19,7 @@ public class Login {
     private JLabel warningLabel;
 
     public Login() {
-        presenter = new Presenter(this);
+        Presenter presenter = new Presenter(this);
 
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
