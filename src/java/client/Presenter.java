@@ -1,5 +1,7 @@
 package client;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import javax.swing.*;
 
 import java.io.*;
@@ -18,6 +20,8 @@ public final class Presenter {
 
     private Map<String, JTextArea> dialogs = new HashMap<>();
     private PrintWriter output = null;
+    private String username;
+    private char[] password;
 
     public Presenter(Login loginForm) {
         this.loginForm = loginForm;
@@ -25,25 +29,30 @@ public final class Presenter {
     }
 
     public void logIn(String username, char[] password) {
-        sendAuthData("/log/", username, password);
+        if (isInvalid(username) || password.length == 0) return;
+
+        loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), false);
+        this.username = username;
+        this.password = password;
+        output.println("/log/" + username);
     }
 
     public void register(String username, char[] password) {
-        sendAuthData("/reg/", username, password);
+        if (isInvalid(username) || password.length == 0) return;
+
+        loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), false);
+        String hashedPassword = BCrypt.hashpw(new String(password), BCrypt.gensalt());
+        Arrays.fill(password, '0');
+        output.println("/reg/" + ZoneId.systemDefault() + " " + username + "/" + hashedPassword);
     }
 
-    private void sendAuthData(String command, String username, char[] password) {
-        if (username.isEmpty() || password.length == 0) return;
+    private boolean isInvalid(String username) {
+        if (username.isEmpty()) return true;
         if (username.contains("/")) {
             loginForm.displayWarning("A username cannot contain /");
-            return;
+            return true;
         }
-        StringBuilder builder = new StringBuilder(username + "/");
-        for (char c : password) {
-            builder.append(c);
-        }
-        Arrays.fill(password, '0');
-        output.println(command + ZoneId.systemDefault() + " " + builder.toString());
+        return false;
     }
 
     public void searchNewContact(String contact) {
@@ -96,13 +105,27 @@ public final class Presenter {
         protected void process(List<String> inputs) {
             for (String input : inputs) {
                 if (input.startsWith("/")) {
-                    if (input.equals("/pass")) {
+                    if (input.equals("/allowReg")) {
                         loginForm.close();
                         loginForm = null;
                         chatForm = new Chat(Presenter.this);
-                    } else if (input.equals("/deny")) {
+                    } else if (input.startsWith("/hash/")) {
+                        String hash = input.replace("/hash/", "");
+                        if (BCrypt.checkpw(new String(password), hash)) {
+                            loginForm.close();
+                            loginForm = null;
+                            chatForm = new Chat(Presenter.this);
+                            output.println("/match/" + username + "/" + ZoneId.systemDefault());
+                        } else {
+                            loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), true);
+                            loginForm.displayWarning("Incorrect username or password");
+                        }
+                        Arrays.fill(password, '0');
+                    } else if (input.equals("/denyLog")) {
+                        loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), true);
                         loginForm.displayWarning("Incorrect username or password");
-                    } else if (input.equals("/denyName")) {
+                    } else if (input.equals("/denyReg")) {
+                        loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), true);
                         loginForm.displayWarning("This name is already taken");
                     } else if (input.startsWith("/newDialog/")) {
                         String contact = input.replace("/newDialog/", "");
