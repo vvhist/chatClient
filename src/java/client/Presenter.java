@@ -6,7 +6,10 @@ import javax.swing.*;
 
 import java.io.*;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +23,8 @@ public final class Presenter {
 
     private Map<String, JTextArea> dialogs = new HashMap<>();
     private PrintWriter output = null;
-    private String username;
-    private char[] password;
+    private String enteredUsername;
+    private char[] enteredPassword;
 
     public Presenter(Login loginForm) {
         this.loginForm = loginForm;
@@ -32,8 +35,8 @@ public final class Presenter {
         if (isInvalid(username) || password.length == 0) return;
 
         loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), false);
-        this.username = username;
-        this.password = password;
+        enteredUsername = username;
+        enteredPassword = password;
         output.println("/log/" + username);
     }
 
@@ -41,6 +44,7 @@ public final class Presenter {
         if (isInvalid(username) || password.length == 0) return;
 
         loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), false);
+        enteredUsername = username;
         String hashedPassword = BCrypt.hashpw(new String(password), BCrypt.gensalt());
         Arrays.fill(password, '0');
         output.println("/reg/" + ZoneId.systemDefault() + " " + username + "/" + hashedPassword);
@@ -84,6 +88,8 @@ public final class Presenter {
         final String host = "localhost";
         final int port = 9009;
 
+        String actualUsername = "";
+
         @Override
         protected Void doInBackground() throws IOException {
             try (Socket socket = new Socket(host, port);
@@ -106,21 +112,23 @@ public final class Presenter {
             for (String input : inputs) {
                 if (input.startsWith("/")) {
                     if (input.equals("/allowReg")) {
+                        actualUsername = enteredUsername;
                         loginForm.close();
                         loginForm = null;
                         chatForm = new Chat(Presenter.this);
                     } else if (input.startsWith("/hash/")) {
                         String hash = input.replace("/hash/", "");
-                        if (BCrypt.checkpw(new String(password), hash)) {
+                        if (BCrypt.checkpw(new String(enteredPassword), hash)) {
+                            actualUsername = enteredUsername;
                             loginForm.close();
                             loginForm = null;
                             chatForm = new Chat(Presenter.this);
-                            output.println("/match/" + username + "/" + ZoneId.systemDefault());
+                            output.println("/match/" + enteredUsername + "/" + ZoneId.systemDefault());
                         } else {
                             loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), true);
                             loginForm.displayWarning("Incorrect username or password");
                         }
-                        Arrays.fill(password, '0');
+                        Arrays.fill(enteredPassword, '0');
                     } else if (input.equals("/denyLog")) {
                         loginForm.enableComponents(loginForm.$$$getRootComponent$$$(), true);
                         loginForm.displayWarning("Incorrect username or password");
@@ -139,14 +147,21 @@ public final class Presenter {
                         chatForm.displayWarning("User " + contact + " was not found");
                     }
                 } else {
-                    String time = input.substring(0, input.indexOf(' '));
-                    input       = input.substring(   input.indexOf(' ') + 1);
-                    String contact = input.substring(0, input.indexOf('/'));
-                    String message = input.substring(   input.indexOf('/') + 1);
+                    String[] messageParts = input.split("/", 4);
+                    String sender    = messageParts[0];
+                    String recipient = messageParts[1];
+                    String timestamp = messageParts[2];
+                    String text      = messageParts[3];
+
+                    String contact = actualUsername.equals(sender) ? recipient : sender;
                     if (!dialogs.containsKey(contact)) {
                         dialogs.put(contact, chatForm.getNewTab(contact));
                     }
-                    dialogs.get(contact).append(time + " " + message + "\n");
+                    String time = LocalDateTime.parse(timestamp)
+                            .toLocalTime()
+                            .truncatedTo(ChronoUnit.SECONDS)
+                            .format(DateTimeFormatter.ISO_LOCAL_TIME);
+                    dialogs.get(contact).append(time + " " + sender + ": " + text + "\n");
                 }
             }
         }
