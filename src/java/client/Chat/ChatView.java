@@ -1,4 +1,4 @@
-package client;
+package client.Chat;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -10,7 +10,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class Chat {
+public final class ChatView {
 
     private JPanel mainPanel;
     private JLabel warningLabel;
@@ -20,7 +20,9 @@ public class Chat {
     private JButton sendButton;
     private JTabbedPane tabbedPane;
 
-    public Chat(Presenter presenter) {
+    public ChatView(String username) {
+        ChatPresenter presenter = new ChatPresenter(this, username);
+
         newContactButton.addActionListener(e -> {
             presenter.searchNewContact(newContactField.getText());
             newContactField.setText("");
@@ -50,7 +52,7 @@ public class Chat {
             }
         });
 
-        JFrame frame = new JFrame("Chat");
+        JFrame frame = new JFrame(username);
         frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override

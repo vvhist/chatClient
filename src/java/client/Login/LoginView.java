@@ -1,4 +1,4 @@
-package client;
+package client.Login;
 
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class Login {
+public final class LoginView {
 
     private JFrame frame;
     private JPanel mainPanel;
@@ -18,8 +18,8 @@ public class Login {
     private JButton registerButton;
     private JLabel warningLabel;
 
-    public Login() {
-        Presenter presenter = new Presenter(this);
+    public LoginView() {
+        LoginPresenter presenter = new LoginPresenter(this);
 
         loginButton.addActionListener(e -> {
             String username = usernameField.getText();
@@ -91,7 +91,7 @@ public class Login {
         label1.setText("Username");
         mainPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         passwordField = new JPasswordField();
-        mainPanel.add(passwordField, new GridConstraints(1, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        mainPanel.add(passwordField, new GridConstraints(1, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(175, -1), null, 0, false));
         final JLabel label2 = new JLabel();
         label2.setText("Password");
         mainPanel.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
