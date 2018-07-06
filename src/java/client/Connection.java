@@ -28,7 +28,7 @@ public final class Connection extends SwingWorker<Void, String> {
                      new OutputStreamWriter(
                              socket.getOutputStream(), "UTF-8")), true)) {
 
-            out.println("zone " + ZoneId.systemDefault());
+            out.println(Command.Output.TIMEZONE + Command.DELIMITER + ZoneId.systemDefault());
             Connection.out = out;
 
             for (String fromServer; (fromServer = in.readLine()) != null; ) {
@@ -43,9 +43,9 @@ public final class Connection extends SwingWorker<Void, String> {
         inputs.forEach(presenter::processInput);
     }
 
-    public static void send(String output) {
+    public static void send(Command.Output command, String... output) {
         if (out != null) {
-            out.println(output);
+            out.println(command + Command.DELIMITER + String.join(Command.DELIMITER, output));
         }
     }
 

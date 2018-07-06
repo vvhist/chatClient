@@ -1,8 +1,7 @@
 package client.Login;
 
+import client.*;
 import client.Chat.ChatView;
-import client.Connection;
-import client.Presenter;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Arrays;
@@ -25,7 +24,7 @@ public final class LoginPresenter implements Presenter {
         view.enableComponents(view.$$$getRootComponent$$$(), false);
         enteredUsername = username;
         enteredPassword = password;
-        Connection.send("hash " + username);
+        Connection.send(Command.Output.HASH_REQUEST, username);
     }
 
     public void register(String username, char[] password) {
@@ -35,7 +34,7 @@ public final class LoginPresenter implements Presenter {
         enteredUsername = username;
         String hashedPassword = BCrypt.hashpw(new String(password), BCrypt.gensalt());
         Arrays.fill(password, '0');
-        Connection.send("reg " + username + " " + hashedPassword);
+        Connection.send(Command.Output.REGISTRATION, username, hashedPassword);
     }
 
     private boolean areInvalid(String username, char[] password) {
@@ -43,7 +42,7 @@ public final class LoginPresenter implements Presenter {
             view.displayWarning("Please fill in all the fields");
             return true;
         }
-        if (username.contains(" ")) {
+        if (username.contains(Command.DELIMITER)) {
             view.displayWarning("A username cannot contain spaces");
             return true;
         }
@@ -51,25 +50,31 @@ public final class LoginPresenter implements Presenter {
     }
 
     @Override
-    public void processInput(String input) {
-        if (input.equals("allowReg")) {
-            openChatWindow();
-        } else if (input.startsWith("hash")) {
-            String hash = input.substring(input.indexOf(' ') + 1);
-            if (BCrypt.checkpw(new String(enteredPassword), hash)) {
+    public void processInput(String inputLine) {
+        String[] input = inputLine.split(Command.DELIMITER);
+        switch (Command.Input.get(input[0])) {
+            case ALLOWED_REGISTRATION:
                 openChatWindow();
-                Connection.send("log " + enteredUsername);
-            } else {
+                break;
+            case PASSWORD_HASH:
+                String hash = input[1];
+                if (BCrypt.checkpw(new String(enteredPassword), hash)) {
+                    openChatWindow();
+                    Connection.send(Command.Output.LOGIN, enteredUsername);
+                } else {
+                    view.enableComponents(view.$$$getRootComponent$$$(), true);
+                    view.displayWarning("Incorrect username or password");
+                }
+                Arrays.fill(enteredPassword, '0');
+                break;
+            case DENIED_LOGIN:
                 view.enableComponents(view.$$$getRootComponent$$$(), true);
                 view.displayWarning("Incorrect username or password");
-            }
-            Arrays.fill(enteredPassword, '0');
-        } else if (input.equals("denyLog")) {
-            view.enableComponents(view.$$$getRootComponent$$$(), true);
-            view.displayWarning("Incorrect username or password");
-        } else if (input.equals("denyReg")) {
-            view.enableComponents(view.$$$getRootComponent$$$(), true);
-            view.displayWarning("This name is already taken");
+                break;
+            case DENIED_REGISTRATION:
+                view.enableComponents(view.$$$getRootComponent$$$(), true);
+                view.displayWarning("This name is already taken");
+                break;
         }
     }
 
@@ -87,7 +92,7 @@ public final class LoginPresenter implements Presenter {
 
     @Override
     public void closeApp() {
-        Connection.send("exit");
+        Connection.send(Command.Output.EXIT);
         System.exit(0);
     }
 }

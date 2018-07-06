@@ -1,7 +1,6 @@
 package client.Chat;
 
-import client.Connection;
-import client.Presenter;
+import client.*;
 
 import javax.swing.*;
 import java.time.LocalDateTime;
@@ -28,44 +27,48 @@ public final class ChatPresenter implements Presenter {
         if (dialogs.containsKey(contact)) {
             view.displayWarning("Conversation with " + contact + " already exists.");
         } else {
-            Connection.send("add " + contact);
+            Connection.send(Command.Output.NEW_CONTACT, contact);
         }
     }
 
     public void sendMessage(String contact, String text) {
         if (text.isEmpty()) return;
 
-        Connection.send("msg " + contact + " " + text);
+        Connection.send(Command.Output.NEW_MESSAGE, contact, text);
     }
 
     @Override
-    public void processInput(String input) {
-        if (input.startsWith("msg")) {
-            String[] message = input.split(" ", 5);
-            String sender    = message[1];
-            String recipient = message[2];
-            String timestamp = message[3];
-            String text      = message[4];
+    public void processInput(String inputLine) {
+        String[] input = inputLine.split(Command.DELIMITER, 5);
+        switch (Command.Input.get(input[0])) {
+            case MESSAGE:
+                String sender    = input[1];
+                String recipient = input[2];
+                String timestamp = input[3];
+                String text      = input[4];
 
-            String contact = username.equals(sender) ? recipient : sender;
-            if (!dialogs.containsKey(contact)) {
+                String contact = username.equals(sender) ? recipient : sender;
+                if (!dialogs.containsKey(contact)) {
+                    dialogs.put(contact, view.getNewTab(contact));
+                }
+                String time = LocalDateTime.parse(timestamp)
+                        .toLocalTime()
+                        .truncatedTo(ChronoUnit.SECONDS)
+                        .format(DateTimeFormatter.ISO_LOCAL_TIME);
+                dialogs.get(contact).append(time + " " + sender + ": " + text + "\n");
+                break;
+            case FOUND_USER:
+                contact = input[1];
                 dialogs.put(contact, view.getNewTab(contact));
-            }
-            String time = LocalDateTime.parse(timestamp)
-                    .toLocalTime()
-                    .truncatedTo(ChronoUnit.SECONDS)
-                    .format(DateTimeFormatter.ISO_LOCAL_TIME);
-            dialogs.get(contact).append(time + " " + sender + ": " + text + "\n");
-        } else if (input.startsWith("newChat")) {
-            String contact = input.substring(input.indexOf(' ') + 1);
-            dialogs.put(contact, view.getNewTab(contact));
-            view.displayWarning(" ");
-        } else if (input.startsWith("notFound")) {
-            String contact = input.substring(input.indexOf(' ') + 1);
-            if (contact.length() > 30) {
-                contact = contact.substring(0, 30) + "...";
-            }
-            view.displayWarning("User " + contact + " was not found");
+                view.displayWarning(" ");
+                break;
+            case NOT_FOUND_USER:
+                contact = input[1];
+                if (contact.length() > 30) {
+                    contact = contact.substring(0, 30) + "...";
+                }
+                view.displayWarning("User " + contact + " was not found");
+                break;
         }
     }
 
@@ -78,7 +81,7 @@ public final class ChatPresenter implements Presenter {
 
     @Override
     public void closeApp() {
-        Connection.send("exit");
+        Connection.send(Command.Output.EXIT);
         System.exit(0);
     }
 }
