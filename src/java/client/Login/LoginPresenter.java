@@ -6,13 +6,13 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.Arrays;
 
-public final class LoginPresenter implements Presenter {
+public final class LoginPresenter implements client.Presenter {
 
-    private final LoginView view;
+    private final View view;
     private String enteredUsername;
     private char[] enteredPassword;
 
-    LoginPresenter(LoginView view) {
+    LoginPresenter(View view) {
         this.view = view;
         new Connection().execute();
         Connection.setPresenter(this);
@@ -21,7 +21,7 @@ public final class LoginPresenter implements Presenter {
     public void logIn(String username, char[] password) {
         if (areInvalid(username, password)) return;
 
-        view.enableComponents(view.$$$getRootComponent$$$(), false);
+        view.disable();
         enteredUsername = username;
         enteredPassword = password;
         Connection.send(Command.Output.HASH_REQUEST, username);
@@ -30,11 +30,16 @@ public final class LoginPresenter implements Presenter {
     public void register(String username, char[] password) {
         if (areInvalid(username, password)) return;
 
-        view.enableComponents(view.$$$getRootComponent$$$(), false);
+        view.disable();
         enteredUsername = username;
         String hashedPassword = BCrypt.hashpw(new String(password), BCrypt.gensalt());
         Arrays.fill(password, '0');
         Connection.send(Command.Output.REGISTRATION, username, hashedPassword);
+    }
+
+    public void closeApp() {
+        Connection.send(Command.Output.EXIT);
+        System.exit(0);
     }
 
     private boolean areInvalid(String username, char[] password) {
@@ -62,37 +67,28 @@ public final class LoginPresenter implements Presenter {
                     openChatWindow();
                     Connection.send(Command.Output.LOGIN, enteredUsername);
                 } else {
-                    view.enableComponents(view.$$$getRootComponent$$$(), true);
                     view.displayWarning("Incorrect username or password");
                 }
                 Arrays.fill(enteredPassword, '0');
                 break;
             case DENIED_LOGIN:
-                view.enableComponents(view.$$$getRootComponent$$$(), true);
                 view.displayWarning("Incorrect username or password");
                 break;
             case DENIED_REGISTRATION:
-                view.enableComponents(view.$$$getRootComponent$$$(), true);
                 view.displayWarning("This name is already taken");
                 break;
         }
+        view.enable();
+    }
+
+    @Override
+    public void stop() {
+        view.disable();
+        view.displayWarning("Failed to connect to server");
     }
 
     private void openChatWindow() {
         view.close();
         new ChatView(enteredUsername);
-    }
-
-    @Override
-    public void stop() {
-        String warning = "Failed to connect to server";
-        view.enableComponents(view.$$$getRootComponent$$$(), false);
-        view.displayWarning(warning);
-    }
-
-    @Override
-    public void closeApp() {
-        Connection.send(Command.Output.EXIT);
-        System.exit(0);
     }
 }

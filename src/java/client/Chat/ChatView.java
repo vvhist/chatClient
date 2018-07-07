@@ -9,8 +9,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
+import java.util.Map;
 
-public final class ChatView {
+public final class ChatView implements View {
 
     private JPanel mainPanel;
     private JLabel warningLabel;
@@ -19,6 +21,8 @@ public final class ChatView {
     private JTextField outputField;
     private JButton sendButton;
     private JTabbedPane tabbedPane;
+
+    private final Map<String, JTextArea> dialogs = new HashMap<>();
 
     public ChatView(String username) {
         ChatPresenter presenter = new ChatPresenter(this, username);
@@ -64,35 +68,57 @@ public final class ChatView {
         frame.pack();
         frame.setMinimumSize(new Dimension(500, 300));
         frame.setLocationRelativeTo(null);
+        newContactField.requestFocusInWindow();
         frame.setVisible(true);
     }
 
-    public JTextArea getNewTab(String title) {
+    @Override
+    public boolean hasTab(String title) {
+        return dialogs.containsKey(title);
+    }
+
+    @Override
+    public void addTab(String title) {
         JTextArea textArea = new JTextArea();
+        textArea.setFont($$$getFont$$$("Lucida Sans Unicode", -1, 10, textArea.getFont()));
+        textArea.setEditable(false);
+
         JScrollPane scrollPane = new JScrollPane(textArea);
         JPanel panel = new JPanel(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
         panel.add(scrollPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         tabbedPane.addTab(title, panel);
-        tabbedPane.setEnabled(true);
-        sendButton.setEnabled(true);
-        outputField.setEnabled(true);
-        return textArea;
+
+        if (!tabbedPane.isEnabled()) {
+            tabbedPane.setEnabled(true);
+            sendButton.setEnabled(true);
+            outputField.setEnabled(true);
+        }
+        dialogs.put(title, textArea);
     }
 
-    public void enableComponents(Container container, boolean isEnabled) {
+    @Override
+    public void displayMessage(String tabTitle, String message) {
+        dialogs.get(tabTitle).append(message + "\n");
+    }
+
+    @Override
+    public void displayWarning(String warning) {
+        warningLabel.setText(warning);
+    }
+
+    @Override
+    public void disable() {
+        enableComponents(mainPanel, false);
+        warningLabel.setEnabled(true);
+    }
+
+    private void enableComponents(Container container, boolean isEnabled) {
         for (Component component : container.getComponents()) {
             component.setEnabled(isEnabled);
             if (component instanceof Container) {
                 enableComponents((Container) component, isEnabled);
             }
         }
-    }
-
-    public void displayWarning(String status) {
-        if (!warningLabel.isEnabled()) {
-            warningLabel.setEnabled(true);
-        }
-        warningLabel.setText(status);
     }
 
     {

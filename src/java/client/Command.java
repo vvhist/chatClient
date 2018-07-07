@@ -3,7 +3,7 @@ package client;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Command {
+public final class Command {
 
     public static final String DELIMITER = " ";
 

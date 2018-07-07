@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public final class LoginView {
+public final class LoginView implements View {
 
     private JFrame frame;
     private JPanel mainPanel;
@@ -48,24 +48,34 @@ public final class LoginView {
         frame.setVisible(true);
     }
 
-    public void enableComponents(Container container, boolean isEnabled) {
+    @Override
+    public void displayWarning(String warning) {
+        warningLabel.setText(warning);
+    }
+
+    @Override
+    public void enable() {
+        enableComponents(mainPanel, true);
+    }
+
+    @Override
+    public void disable() {
+        enableComponents(mainPanel, false);
+        warningLabel.setEnabled(true);
+    }
+
+    @Override
+    public void close() {
+        frame.dispose();
+    }
+
+    private void enableComponents(Container container, boolean isEnabled) {
         for (Component component : container.getComponents()) {
             component.setEnabled(isEnabled);
             if (component instanceof Container) {
                 enableComponents((Container) component, isEnabled);
             }
         }
-    }
-
-    public void displayWarning(String warning) {
-        if (!warningLabel.isEnabled()) {
-            warningLabel.setEnabled(true);
-        }
-        warningLabel.setText(warning);
-    }
-
-    public void close() {
-        frame.dispose();
     }
 
     {
