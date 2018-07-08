@@ -9,10 +9,14 @@ import java.util.concurrent.ExecutionException;
 
 public final class Connection extends SwingWorker<Void, String> {
 
-    private static final String HOST = "localhost";
+    private static String host = "localhost";
     private static final int PORT = 9009;
     private static PrintWriter out;
     private static Presenter presenter;
+
+    public static void setHost(String host) {
+        Connection.host = host;
+    }
 
     public static void setPresenter(Presenter presenter) {
         Connection.presenter = presenter;
@@ -20,7 +24,7 @@ public final class Connection extends SwingWorker<Void, String> {
 
     @Override
     protected Void doInBackground() throws IOException {
-        try (Socket socket = new Socket(HOST, PORT);
+        try (Socket socket = new Socket(host, PORT);
              BufferedReader in = new BufferedReader(
                      new InputStreamReader(
                              socket.getInputStream(), "UTF-8"));

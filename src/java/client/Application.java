@@ -7,6 +7,10 @@ import javax.swing.*;
 public final class Application {
 
     public static void main(String[] args) {
+        if (args.length == 1) {
+            Connection.setHost(args[0]);
+        }
+
         SwingUtilities.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
