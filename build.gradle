@@ -9,6 +9,8 @@ repositories {
 dependencies {
   compile(group: 'com.intellij', name: 'forms_rt', version: '7.0.3')
   compile(group: 'org.mindrot', name: 'jbcrypt', version: '0.4')
+  compile(group: 'org.slf4j', name: 'slf4j-api', version: '1.8.0-beta2')
+  compile(group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: '2.11.0')
 }
 
 sourceSets {
@@ -16,6 +18,9 @@ sourceSets {
     java {
       srcDir 'src/java'
     }
+	resources {
+	  srcDir 'src/resources'
+	}
   }
 }
 

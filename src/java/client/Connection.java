@@ -1,5 +1,8 @@
 package client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
@@ -9,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 public final class Connection extends SwingWorker<Void, String> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Connection.class);
     private static String host = "localhost";
     private static final int PORT = 9009;
     private static PrintWriter out;
@@ -16,6 +20,7 @@ public final class Connection extends SwingWorker<Void, String> {
 
     public static void setHost(String host) {
         Connection.host = host;
+        LOGGER.info("Specified host: {}", host);
     }
 
     public static void setPresenter(Presenter presenter) {
@@ -24,6 +29,7 @@ public final class Connection extends SwingWorker<Void, String> {
 
     @Override
     protected Void doInBackground() throws IOException {
+        LOGGER.debug("Trying to connect to port {} on host {}", PORT, host);
         try (Socket socket = new Socket(host, PORT);
              BufferedReader in = new BufferedReader(
                      new InputStreamReader(
@@ -32,8 +38,9 @@ public final class Connection extends SwingWorker<Void, String> {
                      new OutputStreamWriter(
                              socket.getOutputStream(), "UTF-8")), true)) {
 
-            out.println(Command.Output.TIMEZONE + Command.DELIMITER + ZoneId.systemDefault());
+            LOGGER.info("Connection has been established to port {} on host {}", PORT, host);
             Connection.out = out;
+            send(Command.Output.TIMEZONE, ZoneId.systemDefault().toString());
 
             for (String fromServer; (fromServer = in.readLine()) != null; ) {
                 publish(fromServer);
@@ -47,9 +54,11 @@ public final class Connection extends SwingWorker<Void, String> {
         inputs.forEach(presenter::processInput);
     }
 
-    public static void send(Command.Output command, String... output) {
+    public static void send(Command.Output command, String... outputData) {
         if (out != null) {
-            out.println(command + Command.DELIMITER + String.join(Command.DELIMITER, output));
+            String output = String.join(Command.DELIMITER, outputData);
+            out.println(command + Command.DELIMITER + output);
+            LOGGER.trace("From client: {} {}", command.name(), output);
         }
     }
 
@@ -59,7 +68,7 @@ public final class Connection extends SwingWorker<Void, String> {
             get();
         } catch (InterruptedException | ExecutionException e) {
             presenter.stop();
-            e.printStackTrace();
+            LOGGER.error("Failed to connect to server", e);
         } finally {
             out = null;
         }

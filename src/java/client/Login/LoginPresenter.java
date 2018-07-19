@@ -3,11 +3,14 @@ package client.Login;
 import client.*;
 import client.Chat.ChatView;
 import org.mindrot.jbcrypt.BCrypt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
 public final class LoginPresenter implements client.Presenter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginPresenter.class);
     private final View view;
     private String enteredUsername;
     private char[] enteredPassword;
@@ -16,10 +19,12 @@ public final class LoginPresenter implements client.Presenter {
         this.view = view;
         new Connection().execute();
         Connection.setPresenter(this);
+        LOGGER.debug("Login presenter is active");
     }
 
     public void logIn(String username, char[] password) {
         if (areInvalid(username, password)) return;
+        LOGGER.debug("Trying to log in with {} as username", username);
 
         view.disable();
         enteredUsername = username;
@@ -29,6 +34,7 @@ public final class LoginPresenter implements client.Presenter {
 
     public void register(String username, char[] password) {
         if (areInvalid(username, password)) return;
+        LOGGER.debug("Trying to register with {} as username", username);
 
         view.disable();
         enteredUsername = username;
@@ -39,6 +45,7 @@ public final class LoginPresenter implements client.Presenter {
 
     public void closeApp() {
         Connection.send(Command.Output.EXIT);
+        LOGGER.info("Disconnection and exit");
         System.exit(0);
     }
 
@@ -57,7 +64,9 @@ public final class LoginPresenter implements client.Presenter {
     @Override
     public void processInput(String inputLine) {
         String[] input = inputLine.split(Command.DELIMITER);
-        switch (Command.Input.get(input[0])) {
+        Command.Input command = Command.Input.get(input[0]);
+        LOGGER.trace("From server: {}", command.name());
+        switch (command) {
             case ALLOWED_REGISTRATION:
                 openChatWindow();
                 break;
@@ -89,6 +98,8 @@ public final class LoginPresenter implements client.Presenter {
 
     private void openChatWindow() {
         view.close();
+        LOGGER.info("Login window has been closed");
         new ChatView(enteredUsername);
+        LOGGER.info("Chat window has been opened for user {}", enteredUsername);
     }
 }

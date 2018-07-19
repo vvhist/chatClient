@@ -1,6 +1,9 @@
 package client.Chat;
 
 import client.*;
+import client.Login.LoginPresenter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -8,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 
 public final class ChatPresenter implements client.Presenter {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatPresenter.class);
     private final View view;
     private final String username;
 
@@ -15,10 +19,12 @@ public final class ChatPresenter implements client.Presenter {
         this.view = view;
         this.username = username;
         Connection.setPresenter(this);
+        LOGGER.debug("Chat presenter is active");
     }
 
     public void searchNewContact(String contact) {
         if (contact.isEmpty()) return;
+        LOGGER.debug("Trying to search for a new contact {}", contact);
 
         if (view.hasTab(contact)) {
             view.displayWarning("Conversation with " + contact + " already exists.");
@@ -35,19 +41,23 @@ public final class ChatPresenter implements client.Presenter {
 
     public void closeApp() {
         Connection.send(Command.Output.EXIT);
+        LOGGER.info("Disconnection and exit");
         System.exit(0);
     }
 
     @Override
     public void processInput(String inputLine) {
-        String[] input = inputLine.split(Command.DELIMITER, 5);
-        switch (Command.Input.get(input[0])) {
+        String[] input = inputLine.split(Command.DELIMITER, 2);
+        Command.Input command = Command.Input.get(input[0]);
+        LOGGER.trace("From server: {}", inputLine.replaceFirst(input[0], command.name()));
+        switch (command) {
             case MESSAGE:
-                processMessage(input[1], input[2], input[3], input[4]);
+                processMessage(input[1]);
                 break;
             case FOUND_USER:
                 String contact = input[1];
                 view.addTab(contact);
+                LOGGER.info("Adding new contact {}", contact);
                 break;
             case NOT_FOUND_USER:
                 contact = input[1];
@@ -65,7 +75,13 @@ public final class ChatPresenter implements client.Presenter {
         view.displayWarning("Failed to connect to server");
     }
 
-    private void processMessage(String sender, String recipient, String timestamp, String text) {
+    private void processMessage(String message) {
+        String[] messageData = message.split(Command.DELIMITER, 4);
+        String sender    = messageData[0];
+        String recipient = messageData[1];
+        String timestamp = messageData[2];
+        String text      = messageData[3];
+
         String contact = username.equals(sender) ? recipient : sender;
         if (!view.hasTab(contact)) {
             view.addTab(contact);
@@ -74,7 +90,7 @@ public final class ChatPresenter implements client.Presenter {
                 .toLocalTime()
                 .truncatedTo(ChronoUnit.SECONDS)
                 .format(DateTimeFormatter.ISO_LOCAL_TIME);
-        String message = time + " " + sender + ": " + text;
-        view.displayMessage(contact, message);
+        String formattedMessage = time + " " + sender + ": " + text;
+        view.displayMessage(contact, formattedMessage);
     }
 }
