@@ -54,11 +54,10 @@ public final class Connection extends SwingWorker<Void, String> {
         inputs.forEach(presenter::processInput);
     }
 
-    public static void send(Command.Output command, String... outputData) {
+    public static void send(Command.Output command, String... output) {
         if (out != null) {
-            String output = String.join(Command.DELIMITER, outputData);
-            out.println(command + Command.DELIMITER + output);
-            LOGGER.trace("From client: {} {}", command.name(), output);
+            out.println(command + Command.DELIMITER + String.join(Command.DELIMITER, output));
+            LOGGER.trace("From client: {}", command.name());
         }
     }
 

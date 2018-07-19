@@ -2,7 +2,6 @@ package client.Login;
 
 import client.*;
 import client.Chat.ChatView;
-import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,6 @@ public final class LoginPresenter implements client.Presenter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginPresenter.class);
     private final View view;
     private String enteredUsername;
-    private char[] enteredPassword;
 
     LoginPresenter(View view) {
         this.view = view;
@@ -24,23 +22,24 @@ public final class LoginPresenter implements client.Presenter {
 
     public void logIn(String username, char[] password) {
         if (areInvalid(username, password)) return;
-        LOGGER.debug("Trying to log in with {} as username", username);
 
         view.disable();
         enteredUsername = username;
-        enteredPassword = password;
-        Connection.send(Command.Output.HASH_REQUEST, username);
+
+        Connection.send(Command.Output.LOGIN, username, new String(password));
+        Arrays.fill(password, '0');
+        LOGGER.debug("Trying to log in with {} as username", username);
     }
 
     public void register(String username, char[] password) {
         if (areInvalid(username, password)) return;
-        LOGGER.debug("Trying to register with {} as username", username);
 
         view.disable();
         enteredUsername = username;
-        String hashedPassword = BCrypt.hashpw(new String(password), BCrypt.gensalt());
+
+        Connection.send(Command.Output.REGISTRATION, username, new String(password));
         Arrays.fill(password, '0');
-        Connection.send(Command.Output.REGISTRATION, username, hashedPassword);
+        LOGGER.debug("Trying to register with {} as username", username);
     }
 
     public void closeApp() {
@@ -63,22 +62,11 @@ public final class LoginPresenter implements client.Presenter {
 
     @Override
     public void processInput(String inputLine) {
-        String[] input = inputLine.split(Command.DELIMITER);
-        Command.Input command = Command.Input.get(input[0]);
+        Command.Input command = Command.Input.get(inputLine);
         LOGGER.trace("From server: {}", command.name());
         switch (command) {
-            case ALLOWED_REGISTRATION:
+            case ALLOWED_LOGIN:
                 openChatWindow();
-                break;
-            case PASSWORD_HASH:
-                String hash = input[1];
-                if (BCrypt.checkpw(new String(enteredPassword), hash)) {
-                    openChatWindow();
-                    Connection.send(Command.Output.LOGIN, enteredUsername);
-                } else {
-                    view.displayWarning("Incorrect username or password");
-                }
-                Arrays.fill(enteredPassword, '0');
                 break;
             case DENIED_LOGIN:
                 view.displayWarning("Incorrect username or password");

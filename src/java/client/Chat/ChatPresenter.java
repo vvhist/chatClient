@@ -1,7 +1,6 @@
 package client.Chat;
 
 import client.*;
-import client.Login.LoginPresenter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +48,7 @@ public final class ChatPresenter implements client.Presenter {
     public void processInput(String inputLine) {
         String[] input = inputLine.split(Command.DELIMITER, 2);
         Command.Input command = Command.Input.get(input[0]);
-        LOGGER.trace("From server: {}", inputLine.replaceFirst(input[0], command.name()));
+        LOGGER.trace("From server: {}", command.name());
         switch (command) {
             case MESSAGE:
                 processMessage(input[1]);

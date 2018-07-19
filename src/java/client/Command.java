@@ -8,10 +8,9 @@ public final class Command {
     public static final String DELIMITER = " ";
 
     public enum Input {
-        ALLOWED_REGISTRATION("reg"),
+        ALLOWED_LOGIN       ("log"),
         DENIED_REGISTRATION ("!reg"),
         DENIED_LOGIN        ("!log"),
-        PASSWORD_HASH       ("hash"),
         MESSAGE             ("m"),
         FOUND_USER          ("add"),
         NOT_FOUND_USER      ("!add");
@@ -37,7 +36,6 @@ public final class Command {
 
     public enum Output {
         REGISTRATION("reg"),
-        HASH_REQUEST("hash"),
         LOGIN       ("log"),
         TIMEZONE    ("zone"),
         NEW_MESSAGE ("m"),
